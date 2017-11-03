@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mapa de coropletas con Leaflet y GeoJSON Poblacion total</title>
+
+    <meta charset="UTF-8" />
+	
+    <!-- Referencia a estilos personales -->
+    <link rel="stylesheet" href="css/estilos.css">
+
+    <!-- Referencia al código fuente y a los estilos de Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log==" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ==" crossorigin=""/>
+	  
+    <!-- Referencia al código fuente y a los estilos del complemento MousePosition -->	 
+    <script type="text/javascript" src="https://cdn.rawgit.com/ardhi/Leaflet.MousePosition/master/src/L.Control.MousePosition.js"></script>
+    <link rel="stylesheet" href="https://cdn.rawgit.com/ardhi/Leaflet.MousePosition/master/src/L.Control.MousePosition.css"/>	  
+  </head>
+
+  <body>
+    <h1>Costa Rica: Población total para el año 2011 según cantónes </h1>
+    <div id='map'></div>
+
+    <script src="js/Cantones2014wgs84.js" type="text/javascript"></script>
+
+
+    <script>
+      var mapa = L.map('map').setView([9.7, -84], 8);
+      var osm  = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://www.openstreetmap.org/">OpenStreetMap</a>'
+      });
+	    
+      var mbox = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibXZhcmdhcyIsImEiOiJRc3ZyTmZzIn0.npefgTinHjwxhTt8fjzeIw', {
+    	attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    	id: 'mapbox.satellite',
+    	accessToken: 'pk.eyJ1IjoibXZhcmdhcyIsImEiOiJRc3ZyTmZzIn0.npefgTinHjwxhTt8fjzeIw'
+      });    
+      osm.addTo(mapa);
+	    
+      // retorna un color con base en el total de población para el año 2011
+	  // Clasificación en 5 categorias por cortes natuarles 
+      function color(d) {
+	return d > 163751 ? '#641e16' :
+	       d > 94420 ? '#922b21' :
+	       d > 50826 ? '#cd6155' :
+		   d > 28045 ? '#f1948a' :
+		   d > 1 ?  '#f2d7d5' :
+		               '#fdedc';
+      }	    
+      function infoCantones(feature, layer) {
+	var popupContent = "Cantones: ";
+	if (feature.properties && feature.properties.POB_2011_T) {
+	  popupContent += feature.properties.POB_2011_T;
+	} else {
+	  popupContent += 0; 
+	}
+	layer.cantones(popupContent);
+      }	    	    
+	    
+      var cantones = L.geoJson(cantones, {
+        style: function (feature) {
+	  return {
+	    weight: 1,
+	    opacity: 1,
+	    color: 'black',
+	    dashArray: '3',
+	    fillOpacity: 0.7,		  
+            fillColor: color(feature.properties.POB_2011_T)
+          };
+        },
+	      
+	onEachFeature: infoCantones
+      })
+      cantones.addTo(mapa);
+	    
+	    
+      function infoCantones(feature, layer) {
+	var popupContent = "";
+	if (feature.properties && feature.properties.NCANTON) {
+	  popupContent += "Cantón:  "+ feature.properties.NCANTON;
+	}
+	if (feature.properties && feature.properties.POB_2011_T) {
+	  popupContent += "<br>Población Total : "+ feature.properties.POB_2011_T;
+	}
+	layer.bindPopup(popupContent);
+      }	    
+
+ 	    
+    var baseLayers = {
+	"OpenStreetMap": osm,
+	"MapBox" : mbox
+      };
+     var overlays = {
+	"Cantones": cantones
+	
+      };
+      L.control.layers(baseLayers, overlays).addTo(mapa);
+	    
+      L.control.mousePosition().addTo(mapa);
+
+    </script>
+  </body>
+</html>
+
